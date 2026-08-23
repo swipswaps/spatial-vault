@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Search, Zap, Server, ExternalLink, Play } from 'lucide-react';
 import { SpatialTimeline, SpatialNode } from './SpatialTimeline';
 import { WebGLPlayerWithSubtitles } from './WebGLPlayerWithSubtitles';
+import { ThumbnailTimeline } from './ThumbnailTimeline';
 import { ErrorBoundary } from './ErrorBoundary';
 import './App.css';
 
@@ -18,39 +19,39 @@ interface SearchItem {
   score?: number;
 }
 
-const DEFAULT_VIDEO_URL = '/videos/demo.mp4';
+const DEFAULT_VIDEO_URL = 'https://media.w3.org/2010/05/sintel/trailer.mp4';
 const DEFAULT_SUBTITLE_URL = './subtitles/demo.vtt';
 
 const MOCK_DATA: SearchItem[] = [
   {
     id: '1',
-    title: 'Local Demo Clip: Start',
+    title: 'Sintel Trailer: Start',
     timestamp: '00:00:00',
     seconds: 0,
-    snippet: 'Local demo video loaded from /videos/demo.mp4.',
-    category: 'Local',
+    snippet: 'Open-source movie trailer from the Blender Foundation.',
+    category: 'Video',
     video_url: DEFAULT_VIDEO_URL,
     subtitle_url: DEFAULT_SUBTITLE_URL,
     score: 1.0,
   },
   {
     id: '2',
-    title: 'Local Demo Clip: Middle',
-    timestamp: '00:00:05',
-    seconds: 5,
-    snippet: 'Jump to the middle of the local demo video.',
-    category: 'Local',
+    title: 'Sintel Trailer: Middle',
+    timestamp: '00:00:30',
+    seconds: 30,
+    snippet: 'Jump to 30 seconds into the trailer.',
+    category: 'Video',
     video_url: DEFAULT_VIDEO_URL,
     subtitle_url: DEFAULT_SUBTITLE_URL,
     score: 1.0,
   },
   {
     id: '3',
-    title: 'Local Demo Clip: Later',
-    timestamp: '00:00:10',
-    seconds: 10,
-    snippet: 'Jump to a later point in the local demo video.',
-    category: 'Local',
+    title: 'Sintel Trailer: Later',
+    timestamp: '00:01:00',
+    seconds: 60,
+    snippet: 'Jump to 1 minute into the trailer.',
+    category: 'Video',
     video_url: DEFAULT_VIDEO_URL,
     subtitle_url: DEFAULT_SUBTITLE_URL,
     score: 1.0,
@@ -70,29 +71,36 @@ function toSpatialNodes(items: SearchItem[]): SpatialNode[] {
 export default function App() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchItem[]>(MOCK_DATA);
-  const [isBackendConnected, setIsBackendConnected] = useState(false);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeVideoUrl, setActiveVideoUrl] = useState(DEFAULT_VIDEO_URL);
   const [activeInitialTime, setActiveInitialTime] = useState(0);
   const [activeSubtitleUrl, setActiveSubtitleUrl] = useState(DEFAULT_SUBTITLE_URL);
-  const [activeTitle, setActiveTitle] = useState('Local Demo Video');
+  const [activeTitle, setActiveTitle] = useState('Sintel Trailer');
+
+  const checkHealth = useCallback(async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch('http://localhost:8000/health', {
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        setIsBackendConnected(data.status === 'healthy' && data.index_initialized === true);
+        return;
+      }
+    } catch {}
+    setIsBackendConnected(false);
+  }, []);
 
   useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const res = await fetch('http://localhost:8000/health');
-        if (res.ok) {
-          const data = await res.json();
-          setIsBackendConnected(data.status === 'healthy');
-        } else {
-          setIsBackendConnected(false);
-        }
-      } catch {
-        setIsBackendConnected(false);
-      }
-    };
     checkHealth();
-  }, []);
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, [checkHealth]);
 
   const playSearchItem = useCallback((item: SearchItem) => {
     setActiveTitle(item.title);
@@ -108,7 +116,8 @@ export default function App() {
       return;
     }
     setIsSearching(true);
-    if (isBackendConnected) {
+
+    if (isBackendConnected === true) {
       try {
         const res = await fetch('http://localhost:8000/search', {
           method: 'POST',
@@ -117,7 +126,7 @@ export default function App() {
         });
         if (res.ok) {
           const data = await res.json();
-          setResults(data.results);
+          setResults(data.results || []);
           setIsSearching(false);
           return;
         }
@@ -125,6 +134,7 @@ export default function App() {
         setIsBackendConnected(false);
       }
     }
+
     const lower = query.toLowerCase();
     const filtered = MOCK_DATA.filter(
       (item) =>
@@ -138,12 +148,24 @@ export default function App() {
   const handleSelectSpatialNode = useCallback(
     (node: SpatialNode) => {
       const item = results.find((r) => r.id === node.id);
-      if (item) {
-        playSearchItem(item);
-      }
+      if (item) playSearchItem(item);
     },
     [results, playSearchItem]
   );
+
+  const handleThumbnailSelect = useCallback((videoUrl: string, timestamp: number) => {
+    setActiveVideoUrl(videoUrl);
+    setActiveInitialTime(timestamp);
+    setActiveTitle(`Thumbnail: ${videoUrl} @ ${timestamp}s`);
+  }, []);
+
+  const getStatus = () => {
+    if (isBackendConnected === null) return { text: 'Checking backend...', color: '#f59e0b' };
+    if (isBackendConnected === true) return { text: 'FastAPI Vector Search (Active)', color: '#10b981' };
+    return { text: 'Client-Side Static (Fallback)', color: '#f59e0b' };
+  };
+
+  const status = getStatus();
 
   return (
     <div className="container">
@@ -153,9 +175,9 @@ export default function App() {
           <h1 style={{ margin: 0 }}>Spatial Media Vault</h1>
         </div>
         <div className="status-badge">
-          <Server size={14} color={isBackendConnected ? '#10b981' : '#f59e0b'} />
+          <Server size={14} color={status.color} />
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            {isBackendConnected ? 'FastAPI Vector Search (Active)' : 'Client-Side Static (Fallback)'}
+            {status.text}
           </span>
         </div>
       </header>
@@ -222,6 +244,8 @@ export default function App() {
           />
         </ErrorBoundary>
       </div>
+
+      <ThumbnailTimeline onSelectThumbnail={handleThumbnailSelect} />
     </div>
   );
 }
