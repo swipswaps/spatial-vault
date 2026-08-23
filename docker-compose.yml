@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build: .
+    command: pytest tests/test_api.py -v
+    volumes:
+      - .:/app
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    volumes:
+      - .:/app
+      - /home/owner/Pictures/Screenshots:/home/owner/Pictures/Screenshots
+    depends_on:
+      test-runner:
+        condition: service_completed_successfully
+    restart: unless-stopped
