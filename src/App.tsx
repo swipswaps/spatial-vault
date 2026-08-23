@@ -89,6 +89,7 @@ export default function App() {
       clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
+        // Only mark as connected if the index is initialized
         setIsBackendConnected(data.status === 'healthy' && data.index_initialized === true);
         return;
       }
