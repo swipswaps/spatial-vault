@@ -1,0 +1,46 @@
+name: Backend CI & Docker Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t vault-backend .
+      - name: Run Pytest inside container and capture logs
+        run: |
+          docker run --rm vault-backend pytest tests/test_api.py -v > pytest.log 2>&1
+          exit_code=$?
+          if [ $exit_code -ne 0 ]; then
+            echo "Pytest failed. See log below:"
+            cat pytest.log
+            exit $exit_code
+          fi
+      - name: Upload Pytest logs as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-pytest-logs
+          path: pytest.log
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm install
+      - run: npm run build
+      - name: Upload frontend dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist

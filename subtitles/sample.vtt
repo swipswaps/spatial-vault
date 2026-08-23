@@ -1,0 +1,10 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+Welcome to the Spatial Media Vault demo.
+
+00:00:03.000 --> 00:00:06.000
+This is a fallback subtitle track using WebVTT.
+
+00:00:06.000 --> 00:00:09.000
+WASM libass will be used if available.
