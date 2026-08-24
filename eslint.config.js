@@ -39,5 +39,10 @@ export default [
       'no-empty': 'off', // Empty blocks may be placeholders
     },
   },
+  {
+    settings: {
+      react: { version: 'detect' },
+    },
+  },
   prettier,
 ];
