@@ -1,25 +1,21 @@
 /**
  * ThumbnailTimeline – displays screenshots; user can select image files.
  */
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 
 interface ThumbnailTimelineProps {
   onSelectThumbnail?: (videoUrl: string, timestamp: number) => void;
 }
 
-export function ThumbnailTimeline({
-  onSelectThumbnail,
-}: ThumbnailTimelineProps) {
-  const [screenshots, setScreenshots] = useState<
-    { url: string; timestamp: number }[]
-  >([]);
+export function ThumbnailTimeline({ onSelectThumbnail }: ThumbnailTimelineProps) {
+  const [screenshots, setScreenshots] = useState<{ url: string; timestamp: number }[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Default thumbnail (HTTPS, works in Chromium)
   React.useEffect(() => {
     const defaultThumb = {
-      url: "https://img.youtube.com/vi/F_Xj25I-BF0/hqdefault.jpg",
+      url: 'https://img.youtube.com/vi/F_Xj25I-BF0/hqdefault.jpg',
       timestamp: 230,
     };
     setScreenshots([defaultThumb]);
@@ -44,7 +40,7 @@ export function ThumbnailTimeline({
     const newShots: { url: string; timestamp: number }[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (file.type.startsWith("image/")) {
+      if (file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
         // Use index as timestamp placeholder (you can customise)
         const ts = i * 30;
@@ -61,28 +57,19 @@ export function ThumbnailTimeline({
   };
 
   return (
-    <div style={{ marginTop: "2rem" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "1rem",
-          marginBottom: "0.5rem",
-        }}
-      >
-        <h3 style={{ margin: 0, color: "var(--text)" }}>
-          📸 Screenshot Timeline
-        </h3>
+    <div style={{ marginTop: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+        <h3 style={{ margin: 0, color: 'var(--text)' }}>📸 Screenshot Timeline</h3>
         <button
           onClick={handleUploadClick}
           style={{
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            color: "var(--text)",
-            padding: "0.3rem 0.8rem",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "0.8rem",
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            color: 'var(--text)',
+            padding: '0.3rem 0.8rem',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.8rem',
           }}
         >
           Upload Images
@@ -92,23 +79,21 @@ export function ThumbnailTimeline({
           type="file"
           accept="image/*"
           multiple
-          style={{ display: "none" }}
+          style={{ display: 'none' }}
           onChange={handleFileChange}
         />
-        <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-          {screenshots.length > 0
-            ? `${screenshots.length} thumbnails`
-            : "No thumbnails"}
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+          {screenshots.length > 0 ? `${screenshots.length} thumbnails` : 'No thumbnails'}
         </span>
       </div>
 
       <div
         style={{
-          display: "flex",
-          gap: "0.5rem",
-          overflowX: "auto",
-          padding: "0.5rem 0",
-          borderBottom: "1px solid var(--border)",
+          display: 'flex',
+          gap: '0.5rem',
+          overflowX: 'auto',
+          padding: '0.5rem 0',
+          borderBottom: '1px solid var(--border)',
         }}
       >
         {screenshots.map((item, idx) => (
@@ -116,15 +101,12 @@ export function ThumbnailTimeline({
             key={idx}
             onClick={() => handleSelect(idx)}
             style={{
-              flex: "0 0 120px",
-              cursor: "pointer",
-              border:
-                selectedIndex === idx
-                  ? "2px solid var(--primary)"
-                  : "2px solid transparent",
-              borderRadius: "6px",
-              overflow: "hidden",
-              transition: "border 0.2s",
+              flex: '0 0 120px',
+              cursor: 'pointer',
+              border: selectedIndex === idx ? '2px solid var(--primary)' : '2px solid transparent',
+              borderRadius: '6px',
+              overflow: 'hidden',
+              transition: 'border 0.2s',
             }}
           >
             <img
@@ -132,25 +114,16 @@ export function ThumbnailTimeline({
               alt={`Thumbnail ${idx}`}
               crossOrigin="anonymous"
               style={{
-                width: "100%",
-                height: "80px",
-                objectFit: "cover",
-                display: "block",
+                width: '100%',
+                height: '80px',
+                objectFit: 'cover',
+                display: 'block',
               }}
               onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="120" height="80" fill="%23334155"%3E%3Crect width="120" height="80"/%3E%3Ctext x="10" y="40" fill="%2394a3b8" font-size="12"%3ENo image%3C/text%3E%3C/svg%3E';
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="120" height="80" fill="%23334155"%3E%3Crect width="120" height="80"/%3E%3Ctext x="10" y="40" fill="%2394a3b8" font-size="12"%3ENo image%3C/text%3E%3C/svg%3E';
               }}
             />
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: "0.7rem",
-                padding: "2px",
-                background: "var(--card)",
-                color: "var(--text-muted)",
-              }}
-            >
+            <div style={{ textAlign: 'center', fontSize: '0.7rem', padding: '2px', background: 'var(--card)', color: 'var(--text-muted)' }}>
               @{item.timestamp}s
             </div>
           </div>
