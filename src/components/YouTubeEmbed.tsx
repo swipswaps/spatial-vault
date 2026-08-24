@@ -1,6 +1,4 @@
-import React from "react";
-
-export default function YouTubeEmbed({ videoId }) {
+export default function YouTubeEmbed({ videoId }: { videoId: string }) {
   const src = `https://www.youtube.com/embed/${videoId}`;
   return (
     <iframe
